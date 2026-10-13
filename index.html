@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MM WASSERZEICHEN ENTFERNER</title>
+<meta name="description" content="Übermale Wasserzeichen, Logos und Zeitstempel per Hand und lass sie direkt im Browser wegretuschieren. Keine Uploads, keine Anmeldung.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #E4E7E7;
+    --panel: #FCFDFB;
+    --ink: #16232B;
+    --ink-soft: #4A5A61;
+    --line: #B7C1C0;
+    --dark: #171F23;
+    --dark-panel: #212B30;
+    --accent: #D6402C;
+    --accent-ink: #FFF4F1;
+    --accent-2: #F2B705;
+    --radius: 3px;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:16px;
+    line-height:1.55;
+  }
+  h1,h2,h3,.display{
+    font-family:'Bebas Neue', sans-serif;
+    font-weight:400;
+    letter-spacing:0.02em;
+    line-height:0.95;
+    text-transform:uppercase;
+    color:var(--ink);
+  }
+  .mono{font-family:'IBM Plex Mono', monospace;}
+  a{color:inherit;}
+  :focus-visible{outline:3px solid var(--accent); outline-offset:2px;}
+
+  /* sprocket strip — signature motif referencing 35mm film */
+  .sprockets{
+    display:flex;
+    gap:10px;
+    padding:8px 20px;
+  }
+  .sprockets span{
+    width:12px;height:8px;border-radius:2px;
+    background:var(--ink);
+    opacity:0.18;
+    flex:0 0 auto;
+  }
+  .sprockets.on-dark span{ background:#fff; opacity:0.22; }
+
+  .wrap{max-width:1400px; margin:0 auto; padding:0 28px;}
+
+  /* NAV */
+  header.site{
+    position:sticky; top:0; z-index:40;
+    background:var(--bg);
+    border-bottom:1px solid var(--line);
+  }
+  .nav-inner{
+    max-width:1400px; margin:0 auto; padding:16px 28px;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .logo{
+    display:flex; align-items:center; gap:10px;
+    font-family:'Bebas Neue', sans-serif; font-size:26px; letter-spacing:0.03em;
+  }
+  .logo .dot{width:10px;height:10px;background:var(--accent);border-radius:50%;display:inline-block;}
+  nav.links{display:flex; gap:28px; font-size:14.5px;}
+  nav.links a{text-decoration:none; color:var(--ink-soft); border-bottom:2px solid transparent; padding-bottom:2px;}
+  nav.links a:hover{color:var(--ink); border-color:var(--accent);}
+  .btn{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:11px 20px;
+    border-radius:var(--radius);
+    border:1.5px solid var(--ink);
+    background:var(--ink);
+    color:#fff;
+    font-size:14.5px; font-weight:600;
+    cursor:pointer;
+    text-decoration:none;
+  }
+  .btn.primary{background:var(--accent); border-color:var(--accent);}
+  .btn.primary:hover{background:#B93521;}
+  .btn.ghost{background:transparent; color:var(--ink); border-color:var(--ink);}
+  .btn.ghost:hover{background:var(--ink); color:#fff;}
+  .btn:disabled{opacity:0.4; cursor:not-allowed;}
+  .btn.small{padding:8px 14px; font-size:13px;}
+
+  /* HERO */
+  .hero{padding:64px 0 40px;}
+  .hero-grid{display:grid; grid-template-columns:1fr; gap:40px;}@media(min-width:920px){.hero-grid{grid-template-columns:0.9fr 1.1fr;}}
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px; letter-spacing:0.12em; text-transform:uppercase;
+    color:var(--accent); font-weight:500; margin:0 0 14px;
+  }
+  .hero h1{font-size:clamp(44px,7vw,78px); margin:0 0 18px;}
+  .hero h1 em{font-style:normal; color:var(--accent);}
+  .hero p.lead{font-size:18px; color:var(--ink-soft); max-width:52ch; margin:0 0 26px;}
+  .hero-actions{display:flex; gap:14px; flex-wrap:wrap;}
+  .hero-note{margin-top:14px; font-size:13px; color:var(--ink-soft);}
+
+  /* TOOL PANEL */
+  .tool-frame{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    overflow:hidden;
+    box-shadow:0 1px 0 var(--line);
+  }
+  .tool-frame .sprockets{background:var(--dark); border-bottom:1px solid #000;}
+  .tool-body{padding:26px;}
+
+  .dropzone{
+    border:2px dashed var(--line);
+    border-radius:var(--radius);
+    padding:48px 24px;
+    text-align:center;
+    cursor:pointer;
+    transition:border-color .15s, background .15s;
+  }
+  .dropzone:hover, .dropzone.drag{
+    border-color:var(--accent);
+    background:#FBEDEA;
+  }
+  .dropzone svg{margin-bottom:14px;}
+  .dropzone .dz-title{font-family:'Bebas Neue'; font-size:24px; margin:0 0 6px;}
+  .dropzone .dz-sub{color:var(--ink-soft); font-size:14px;}
+  .dropzone input{display:none;}
+
+  .workspace{display:none;}
+  .workspace.active{display:block;}
+  .stage-wrap{
+    position:relative;
+    background:repeating-conic-gradient(#dfe3e3 0% 25%, #eef0ef 0% 50%) 0 0/22px 22px;
+    border:1px solid var(--line);
+    border-radius:2px;
+    overflow:hidden;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .stage-wrap canvas{
+    max-width:100%;
+    display:block;
+    touch-action:none;
+    cursor:none;
+  }
+  #cursorDot{
+    position:absolute; pointer-events:none;
+    border:2px solid var(--accent);
+    border-radius:50%;
+    background:rgba(214,64,44,0.16);
+    transform:translate(-50%,-50%);
+    display:none;
+  }
+
+  .toolbar{
+    display:flex; flex-wrap:wrap; align-items:center; gap:18px;
+    margin-top:16px; padding:14px 16px;
+    background:var(--dark-panel);
+    border-radius:var(--radius);
+    color:#fff;
+  }
+  .toolbar .grp{display:flex; align-items:center; gap:10px;}
+  .toolbar label{font-size:12.5px; font-family:'IBM Plex Mono'; color:#B9C3C6; white-space:nowrap;}
+  .toolbar input[type=range]{width:110px; accent-color:var(--accent);}
+  .toolbar .val{font-family:'IBM Plex Mono'; font-size:12.5px; color:var(--accent-2); min-width:2.5em;}
+  .tool-toggle{display:flex; border:1px solid #3B474D; border-radius:2px; overflow:hidden;}
+  .tool-toggle button{
+    background:transparent; border:none; color:#B9C3C6;
+    padding:7px 12px; font-size:13px; cursor:pointer; font-family:'IBM Plex Sans';
+  }
+  .tool-toggle button.active{background:var(--accent); color:#fff;}
+  .spacer{flex:1 1 auto;}
+
+  .status-row{
+    display:flex; align-items:center; gap:12px; margin-top:14px; font-size:13.5px; color:var(--ink-soft);
+  }
+  .status-dot{width:8px;height:8px;border-radius:50%; background:var(--line); flex:0 0 auto;}
+  .status-dot.busy{background:var(--accent-2); animation:pulse 1s infinite;}
+  .status-dot.done{background:#3E8E5A;}
+  @keyframes pulse{50%{opacity:.3;}}
+  progress{width:220px; height:8px; accent-color:var(--accent);}
+
+  .out-row{display:flex; gap:12px; align-items:center; margin-top:14px; flex-wrap:wrap;}
+
+  /* TIPS */
+  .tips{
+    margin-top:16px; padding:14px 16px;
+    border-left:3px solid var(--accent-2);
+    background:#FBF6E4;
+    font-size:13.5px; color:#5A4B12;
+    border-radius:0 2px 2px 0;
+  }
+
+  /* SECTIONS */
+  section{padding:78px 0;}
+  .section-head{max-width:60ch; margin-bottom:44px;}
+  .section-head .eyebrow{margin-bottom:10px;}
+  .section-head h2{font-size:clamp(32px,5vw,46px); margin:0 0 12px;}
+  .section-head p{color:var(--ink-soft); font-size:16.5px; margin:0;}
+
+  .rule{
+    border:none; border-top:1px solid var(--line);
+    position:relative;
+  }
+  .rule::after{
+    content:'';
+    position:absolute; left:0; top:-1px;
+    width:64px; height:3px; background:var(--accent);
+  }
+
+  /* FILMSTRIP STEPS */
+  .filmstrip{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:0;
+    background:var(--dark); border-radius:var(--radius); overflow:hidden;
+  }
+  .frame{
+    padding:26px 22px; border-right:1px solid #000; color:#fff; position:relative;
+  }
+  .frame:last-child{border-right:none;}
+  .frame .fnum{font-family:'IBM Plex Mono'; font-size:12px; color:var(--accent-2);}
+  .frame h3{font-size:22px; color:#fff; margin:8px 0 8px;}
+  .frame p{font-size:13.5px; color:#B9C3C6; margin:0;}
+
+  /* FEATURE GRID */
+  .feat-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--line);}
+  .feat{background:var(--panel); padding:26px 24px;}
+  .feat .fico{font-size:22px;}
+  .feat h3{font-size:19px; margin:10px 0 8px; text-transform:none; font-family:'IBM Plex Sans'; font-weight:600;}
+  .feat p{color:var(--ink-soft); font-size:14.5px; margin:0;}
+
+  /* COMPARE TABLE */
+  table.compare{width:100%; border-collapse:collapse; font-size:14.5px;}
+  table.compare th, table.compare td{padding:14px 16px; text-align:left; border-bottom:1px solid var(--line); vertical-align:top;}
+  table.compare thead th{font-family:'IBM Plex Mono'; font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-soft); border-bottom:2px solid var(--ink);}
+  table.compare tbody tr:hover{background:#EEF1EF;}
+  table.compare td.method{font-weight:600;}
+
+  /* FAQ */
+  details{border-bottom:1px solid var(--line); padding:16px 0;}
+  details summary{cursor:pointer; font-weight:600; font-size:16px; list-style:none; display:flex; justify-content:space-between; align-items:center;}
+  details summary::-webkit-details-marker{display:none;}
+  details summary::after{content:'+'; font-family:'Bebas Neue'; font-size:22px; color:var(--accent);}
+  details[open] summary::after{content:'–';}
+  details p{color:var(--ink-soft); margin:10px 0 0; font-size:15px;}
+
+  /* CTA */
+  .cta{
+    background:var(--dark); color:#fff; border-radius:var(--radius); overflow:hidden;
+    text-align:center; padding:64px 28px;
+  }
+  .cta h2{color:#fff; font-size:clamp(30px,5vw,46px); margin:0 0 14px;}
+  .cta p{color:#B9C3C6; margin:0 0 26px;}
+
+  footer{background:var(--dark); color:#B9C3C6; padding:50px 0 24px; margin-top:80px;}
+  .foot-grid{display:grid; grid-template-columns:2fr 1fr 1fr; gap:36px; padding-bottom:36px;}
+  .foot-grid h4{color:#fff; font-size:13px; letter-spacing:.06em; text-transform:uppercase; font-family:'IBM Plex Mono'; font-weight:500; margin:0 0 14px;}
+  .foot-grid ul{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:9px; font-size:14px;}
+  .foot-grid a{text-decoration:none; color:#B9C3C6;}
+  .foot-grid a:hover{color:#fff;}
+  .foot-bottom{border-top:1px solid #333; padding-top:20px; font-size:13px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; color:#7C8A8F;}
+
+  @media(min-width:920px){
+    .hero-grid{grid-template-columns:0.95fr 1.05fr; align-items:center;}
+  }
+  @media(max-width:900px){
+    .filmstrip{grid-template-columns:1fr 1fr;}
+    .frame{border-bottom:1px solid #000;}
+    .feat-grid{grid-template-columns:1fr;}
+    .foot-grid{grid-template-columns:1fr;}
+    nav.links{display:none;}
+  }
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto;}
+    .status-dot.busy{animation:none;}
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="nav-inner">
+    <div class="logo"><span class="dot"></span>Spurlos</div>
+    <nav class="links">
+      <a href="#werkzeug">Werkzeug</a>
+      <a href="#ablauf">So funktioniert's</a>
+      <a href="#hinweise">Hinweise</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <a href="#werkzeug" class="btn primary">Video öffnen</a>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <p class="eyebrow">// Manuelle Retusche im Browser</p>
+        <h1>Wasserzeichen<br>von <em>Hand</em><br>übermalen.</h1>
+        <p class="lead">Kein Server, kein Konto, keine KI-Blackbox. Du markierst den störenden Bereich selbst mit dem Pinsel – Spurlos berechnet die Retusche direkt auf deinem Rechner und liefert dir das fertige Video zum Download.</p>
+        <div class="hero-actions">
+          <a href="#werkzeug" class="btn primary">Jetzt Video hochladen</a>
+          <a href="#ablauf" class="btn ghost">Ablauf ansehen</a>
+        </div>
+        <p class="hero-note">Läuft vollständig lokal im Browser · nichts wird hochgeladen · MP4 &amp; WebM</p>
+      </div>
+
+      <div class="tool-frame" id="werkzeug">
+        <div class="sprockets on-dark">
+          <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <div class="tool-body">
+
+          <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Video hochladen, klicken oder Datei hierher ziehen">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#16232B" stroke-width="1.4"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg>
+            <p class="dz-title">Video hier ablegen</p>
+            <p class="dz-sub">oder klicken zum Auswählen · MP4, WebM, MOV</p>
+            <input type="file" id="fileInput" accept="video/*">
+          </div>
+
+          <div class="workspace" id="workspace">
+            <div class="stage-wrap" id="stageWrap">
+              <canvas id="stage"></canvas>
+              <div id="cursorDot"></div>
+            </div>
+
+            <div class="toolbar">
+              <button id="playBtn" class="btn ghost small" type="button" title="Video abspielen/stoppen">▶ Play</button>
+              <div class="grp">
+                <input type="range" id="timeline" min="0" max="100" value="0" style="width:200px;">
+                <span class="val mono" id="timeDisplay">0:00</span>
+              </div>
+              <div class="grp tool-toggle">
+                <button id="modeDraw" class="active" type="button">Übermalen</button>
+                <button id="modeErase" type="button">Radieren</button>
+              </div>
+              <div class="grp">
+                <label for="brush">Pinsel</label>
+                <input type="range" id="brush" min="6" max="80" value="26">
+                <span class="val" id="brushVal">26px</span>
+              </div>
+              <div class="grp">
+                <label for="strength">Stärke</label>
+                <input type="range" id="strength" min="4" max="40" value="18">
+                <span class="val" id="strengthVal">18</span>
+              </div>
+              <button class="btn ghost small" id="clearMask" type="button">Maske leeren</button>
+              <div class="spacer"></div>
+              <button class="btn primary" id="exportBtn" type="button">Retusche berechnen &amp; exportieren</button>
+            </div>
+
+            <div class="status-row">
+              <span class="status-dot" id="statusDot"></span>
+              <span id="statusText">Bereit — übermale den Bereich, den du entfernen möchtest.</span>
+            </div>
+
+            <div class="out-row" id="outRow" style="display:none;">
+              <progress id="progressBar" max="100" value="0"></progress>
+              <a class="btn primary small" id="downloadLink" style="display:none;" download="spurlos-export.webm">Ergebnis herunterladen</a>
+              <button class="btn ghost small" id="resetBtn" type="button">Neues Video laden</button>
+            </div>
+
+            <div class="tips">
+              <strong>Kurzer Realismus-Check:</strong> Spurlos nutzt lokale Weichzeichnung/Umgebungsfüllung, keine trainierte KI-Bildrekonstruktion. Bei ruhigen, einfarbigen Hintergründen sieht das Ergebnis sehr sauber aus – bei feinen Mustern oder Gesichtern bleibt eine leichte Unschärfe sichtbar.
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="ablauf">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">// Ablauf</p>
+        <h2>Vier Bildschritte bis zum sauberen Clip</h2>
+        <p>Wie ein Schnitttisch – nur digital: Du markierst per Hand, was raus soll, der Rest läuft automatisch.</p>
+      </div>
+      <div class="filmstrip">
+        <div class="frame">
+          <span class="fnum">FRAME 01</span>
+          <h3>Hochladen</h3>
+          <p>Video per Drag &amp; Drop ablegen oder auswählen. Bleibt lokal im Browser.</p>
+        </div>
+        <div class="frame">
+          <span class="fnum">FRAME 02</span>
+          <h3>Übermalen</h3>
+          <p>Mit dem Pinsel das Wasserzeichen, Logo oder den Zeitstempel markieren.</p>
+        </div>
+        <div class="frame">
+          <span class="fnum">FRAME 03</span>
+          <h3>Berechnen</h3>
+          <p>Spurlos füllt den markierten Bereich Bild für Bild automatisch auf.</p>
+        </div>
+        <div class="frame">
+          <span class="fnum">FRAME 04</span>
+          <h3>Herunterladen</h3>
+          <p>Ergebnis direkt als WebM-Datei speichern. Kein Wasserzeichen im Export.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">// Warum von Hand</p>
+        <h2>Kontrolle statt Blackbox</h2>
+        <p>Automatische KI-Erkennung rät, wo das Wasserzeichen sitzt. Du weißt es genau — deshalb übernimmst du die Maske selbst.</p>
+      </div>
+      <div class="feat-grid">
+        <div class="feat">
+          <div class="fico">🖊️</div>
+          <h3>Präzise Handmaske</h3>
+          <p>Pinselgröße frei einstellbar, mit Radiergummi für Korrekturen an jeder Stelle.</p>
+        </div>
+        <div class="feat">
+          <div class="fico">🔒</div>
+          <h3>Bleibt auf deinem Gerät</h3>
+          <p>Kein Upload zu fremden Servern. Die gesamte Berechnung läuft im Browser-Tab.</p>
+        </div>
+        <div class="feat">
+          <div class="fico">🎚️</div>
+          <h3>Stärke einstellbar</h3>
+          <p>Von leichtem Weichzeichnen bis kräftiger Umgebungsfüllung – du bestimmst das Maß.</p>
+        </div>
+        <div class="feat">
+          <div class="fico">⚡</div>
+          <h3>Keine Warteschlange</h3>
+          <p>Kein Konto, kein Credit-System, keine Serverlast — die Rechenzeit hängt nur von deinem Gerät ab.</p>
+        </div>
+        <div class="feat">
+          <div class="fico">🎞️</div>
+          <h3>Für feste Positionen</h3>
+          <p>Ideal für Logos oder Zeitstempel, die immer an derselben Stelle im Bild sitzen.</p>
+        </div>
+        <div class="feat">
+          <div class="fico">⬇️</div>
+          <h3>Direkter Export</h3>
+          <p>Ergebnis als WebM-Datei, sofort abspielbar und weiterverwendbar.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="hinweise">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">// Ehrlich gesagt</p>
+        <h2>Manuell vs. automatisch</h2>
+        <p>Damit du weißt, was Spurlos wirklich leistet — ohne Marketing-Versprechen.</p>
+      </div>
+      <table class="compare">
+        <thead>
+          <tr><th>Methode</th><th>Am besten für</th><th>Was dich erwartet</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="method">Spurlos Handmaske + Füllung</td>
+            <td>Feste Logos, Zeitstempel, ruhige Hintergründe</td>
+            <td>Läuft lokal, gute Ergebnisse bei einfachen Flächen, sichtbare Unschärfe bei Details</td>
+          </tr>
+          <tr>
+            <td class="method">Reines Weichzeichnen</td>
+            <td>Schnelles Verdecken auf komplexem Hintergrund</td>
+            <td>Volles Bild bleibt erhalten, aber deutlicher Fleck sichtbar</td>
+          </tr>
+          <tr>
+            <td class="method">Zuschneiden</td>
+            <td>Wasserzeichen am Bildrand</td>
+            <td>Sauber, kostet aber Bildfläche</td>
+          </tr>
+          <tr>
+            <td class="method">Trainierte KI-Rekonstruktion</td>
+            <td>Bewegte Wasserzeichen, komplexe Szenen</td>
+            <td>Bessere Detailtreue, benötigt aber Serverrechenleistung</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="faq">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">// FAQ</p>
+        <h2>Häufige Fragen</h2>
+      </div>
+      <div>
+        <details open>
+          <summary>Werden meine Videos irgendwohin hochgeladen?</summary>
+          <p>Nein. Die gesamte Verarbeitung läuft über die Canvas- und MediaRecorder-Schnittstellen deines Browsers, lokal auf deinem Gerät.</p>
+        </details>
+        <details>
+          <summary>Funktioniert das auch bei einem sich bewegenden Wasserzeichen?</summary>
+          <p>Die Maske bleibt an der Stelle, an der du sie gezeichnet hast. Wandert das Wasserzeichen stark durchs Bild, müsstest du den Bereich großzügiger markieren.</p>
+        </details>
+        <details>
+          <summary>Warum sieht mein Ergebnis leicht unscharf aus?</summary>
+          <p>Spurlos füllt den markierten Bereich mit einer lokal berechneten Umgebungsfüllung statt mit trainierter Bilderkennung. Bei einfarbigen Flächen fällt das kaum auf, bei feinen Mustern schon.</p>
+        </details>
+        <details>
+          <summary>Welche Formate werden unterstützt?</summary>
+          <p>Der Import läuft über alle Videoformate, die dein Browser abspielen kann (i.d.R. MP4, WebM, MOV). Der Export erfolgt als WebM.</p>
+        </details>
+        <details>
+          <summary>Ist das Entfernen von Wasserzeichen erlaubt?</summary>
+          <p>Nutze das Werkzeug nur für Videos, an denen du die nötigen Rechte besitzt. Bei fremden Inhalten kann das Entfernen von Wasserzeichen rechtlich problematisch sein.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="cta">
+        <div class="sprockets" style="justify-content:center; opacity:.5;"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+        <h2>Bereit für den ersten Clip?</h2>
+        <p>Kein Konto, keine Wartezeit — leg direkt los.</p>
+        <a href="#werkzeug" class="btn primary">Video öffnen</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="logo" style="color:#fff;"><span class="dot"></span>Spurlos</div>
+        <p style="color:#8C9A9F; font-size:14px; max-width:36ch; margin-top:12px;">Ein einfaches Retusche-Werkzeug für Videos, das komplett im Browser läuft.</p>
+      </div>
+      <div>
+        <h4>Werkzeug</h4>
+        <ul>
+          <li><a href="#werkzeug">Video öffnen</a></li>
+          <li><a href="#ablauf">Ablauf</a></li>
+          <li><a href="#hinweise">Hinweise</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Sonstiges</h4>
+        <ul>
+          <li><a href="#faq">FAQ</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>Demo-Projekt · keine Serververarbeitung · keine Datenspeicherung</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  const dropzone   = document.getElementById('dropzone');
+  const fileInput  = document.getElementById('fileInput');
+  const workspace  = document.getElementById('workspace');
+  const stageWrap  = document.getElementById('stageWrap');
+  const stage      = document.getElementById('stage');
+  const ctx        = stage.getContext('2d');
+  const cursorDot  = document.getElementById('cursorDot');
+
+  const brushInput    = document.getElementById('brush');
+  const brushVal      = document.getElementById('brushVal');
+  const strengthInput = document.getElementById('strength');
+  const strengthVal   = document.getElementById('strengthVal');
+  const modeDrawBtn   = document.getElementById('modeDraw');
+  const modeEraseBtn  = document.getElementById('modeErase');
+  const clearMaskBtn  = document.getElementById('clearMask');
+  const exportBtn     = document.getElementById('exportBtn');
+  const statusDot     = document.getElementById('statusDot');
+  const statusText    = document.getElementById('statusText');
+  const outRow        = document.getElementById('outRow');
+  const progressBar   = document.getElementById('progressBar');
+  const downloadLink  = document.getElementById('downloadLink');
+  const resetBtn      = document.getElementById('resetBtn');
+
+  let video = document.createElement('video');
+  video.muted = true;
+  video.playsInline = true;
+
+  let maskCanvas = document.createElement('canvas');
+  let maskCtx = maskCanvas.getContext('2d');
+  let blurCanvas = document.createElement('canvas');
+  let blurCtx = blurCanvas.getContext('2d');
+  let tmpCanvas = document.createElement('canvas');
+  let tmpCtx = tmpCanvas.getContext('2d');
+
+  let drawing = false;
+  let mode = 'draw';
+  let rafId = null;
+  let objectUrl = null;
+  let hasVideoLoaded = false;
+
+  function setStatus(text, state){
+    statusText.textContent = text;
+    statusDot.className = 'status-dot' + (state ? ' ' + state : '');
+  }
+
+  // ---------- Upload handling ----------
+  ['dragover','dragenter'].forEach(evt=>{
+    dropzone.addEventListener(evt, e=>{ e.preventDefault(); dropzone.classList.add('drag'); });
+  });
+  ['dragleave','drop'].forEach(evt=>{
+    dropzone.addEventListener(evt, e=>{ e.preventDefault(); dropzone.classList.remove('drag'); });
+  });
+  dropzone.addEventListener('drop', e=>{
+    const f = e.dataTransfer.files && e.dataTransfer.files[0];
+    if(f) loadVideoFile(f);
+  });
+  dropzone.addEventListener('click', ()=> fileInput.click());
+  dropzone.addEventListener('keydown', e=>{
+    if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); fileInput.click(); }
+  });
+  fileInput.addEventListener('change', e=>{
+    const f = e.target.files && e.target.files[0];
+    if(f) loadVideoFile(f);
+  });
+
+  function loadVideoFile(file){
+    if(objectUrl) URL.revokeObjectURL(objectUrl);
+    objectUrl = URL.createObjectURL(file);
+    video.src = objectUrl;
+    video.onloadedmetadata = ()=>{
+      hasVideoLoaded = true;
+      setupCanvases();
+      dropzone.style.display = 'none';
+      workspace.classList.add('active');
+      setStatus('Bereit — übermale den Bereich, den du entfernen möchtest.', '');
+      video.currentTime = Math.min(0.5, video.duration/2);
+    };
+    video.onseeked = drawStaticFrame;
+  }
+
+  function setupCanvases(){
+    const w = video.videoWidth, h = video.videoHeight;
+    [stage, maskCanvas, blurCanvas, tmpCanvas].forEach(c=>{ c.width = w; c.height = h; });
+  }
+
+  function drawStaticFrame(){
+    if(!hasVideoLoaded) return;
+    ctx.drawImage(video, 0, 0, stage.width, stage.height);
+    compositeMaskPreview();
+  }
+
+  // ---------- Live preview compositing (blurred fill inside mask) ----------
+  function compositeMaskPreview(){
+    const blurPx = parseInt(strengthInput.value, 10);
+    blurCtx.clearRect(0,0,blurCanvas.width, blurCanvas.height);
+    blurCtx.filter = 'blur(' + blurPx + 'px)';
+    blurCtx.drawImage(video.readyState >= 2 ? video : stage, 0, 0, blurCanvas.width, blurCanvas.height);
+    blurCtx.filter = 'none';
+
+    tmpCtx.clearRect(0,0,tmpCanvas.width, tmpCanvas.height);
+    tmpCtx.drawImage(blurCanvas, 0, 0);
+    tmpCtx.globalCompositeOperation = 'destination-in';
+    tmpCtx.drawImage(maskCanvas, 0, 0);
+    tmpCtx.globalCompositeOperation = 'source-over';
+
+    ctx.drawImage(tmpCanvas, 0, 0);
+  }
+
+  // ---------- Brush drawing ----------
+  function stageToCanvasCoords(clientX, clientY){
+    const rect = stage.getBoundingClientRect();
+    const scaleX = stage.width / rect.width;
+    const scaleY = stage.height / rect.height;
+    return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY, rect, scaleX, scaleY };
+  }
+
+  function paintAt(x, y){
+    const radius = parseInt(brushInput.value, 10) * (stage.width / stage.getBoundingClientRect().width);
+    maskCtx.globalCompositeOperation = (mode === 'erase') ? 'destination-out' : 'source-over';
+    maskCtx.fillStyle = 'rgba(255,255,255,0.95)';
+    maskCtx.beginPath();
+    maskCtx.arc(x, y, radius, 0, Math.PI*2);
+    maskCtx.fill();
+  }
+
+  function pointerPos(e){
+    if(e.touches && e.touches[0]) return { clientX: e.touches[0].clientX, clientY: e.touches[0].clientY };
+    return { clientX: e.clientX, clientY: e.clientY };
+  }
+
+  function updateCursor(e){
+    const rect = stage.getBoundingClientRect();
+    const size = parseInt(brushInput.value, 10) * 2;
+    cursorDot.style.width = size + 'px';
+    cursorDot.style.height = size + 'px';
+    const p = pointerPos(e);
+    cursorDot.style.left = (p.clientX - rect.left) + 'px';
+    cursorDot.style.top = (p.clientY - rect.top) + 'px';
+  }
+
+  function startDraw(e){
+    if(!hasVideoLoaded) return;
+    e.preventDefault();
+    drawing = true;
+    const p = pointerPos(e);
+    const c = stageToCanvasCoords(p.clientX, p.clientY);
+    paintAt(c.x, c.y);
+    drawStaticFrame();
+  }
+  function moveDraw(e){
+    updateCursor(e);
+    if(!drawing) return;
+    e.preventDefault();
+    const p = pointerPos(e);
+    const c = stageToCanvasCoords(p.clientX, p.clientY);
+    paintAt(c.x, c.y);
+    drawStaticFrame();
+  }
+  function endDraw(){ drawing = false; }
+
+  stageWrap.addEventListener('mousedown', startDraw);
+  stageWrap.addEventListener('mousemove', moveDraw);
+  window.addEventListener('mouseup', endDraw);
+  stageWrap.addEventListener('mouseenter', ()=> cursorDot.style.display = 'block');
+  stageWrap.addEventListener('mouseleave', ()=> cursorDot.style.display = 'none');
+  stageWrap.addEventListener('touchstart', startDraw, {passive:false});
+  stageWrap.addEventListener('touchmove', moveDraw, {passive:false});
+  stageWrap.addEventListener('touchend', endDraw);
+
+  brushInput.addEventListener('input', ()=>{ 
+    brushVal.textContent = brushInput.value + 'px'; 
+    if(hasVideoLoaded && !drawing) drawStaticFrame();
+  });
+  strengthInput.addEventListener('input', ()=>{ strengthVal.textContent = strengthInput.value; if(hasVideoLoaded) drawStaticFrame(); });
+
+  modeDrawBtn.addEventListener('click', ()=>{
+    mode = 'draw'; modeDrawBtn.classList.add('active'); modeEraseBtn.classList.remove('active');
+  });
+  modeEraseBtn.addEventListener('click', ()=>{
+    mode = 'erase'; modeEraseBtn.classList.add('active'); modeDrawBtn.classList.remove('active');
+  });
+  clearMaskBtn.addEventListener('click', ()=>{
+    maskCtx.clearRect(0,0,maskCanvas.width, maskCanvas.height);
+    drawStaticFrame();
+  });
+
+  resetBtn.addEventListener('click', ()=>{
+    hasVideoLoaded = false;
+    video.pause();
+    if(objectUrl) URL.revokeObjectURL(objectUrl);
+    maskCtx.clearRect(0,0,maskCanvas.width, maskCanvas.height);
+    ctx.clearRect(0,0,stage.width, stage.height);
+    workspace.classList.remove('active');
+    dropzone.style.display = '';
+    outRow.style.display = 'none';
+    downloadLink.style.display = 'none';
+    fileInput.value = '';
+    setStatus('Bereit — übermale den Bereich, den du entfernen möchtest.', '');
+  });
+
+  // ---------- Export: play video, composite every frame, record ----------
+  exportBtn.addEventListener('click', async ()=>{
+    if(!hasVideoLoaded) return;
+    const hasMask = maskHasContent();
+    if(!hasMask){
+      setStatus('Bitte zuerst einen Bereich übermalen.', '');
+      return;
+    }
+
+    exportBtn.disabled = true;
+    outRow.style.display = 'flex';
+    downloadLink.style.display = 'none';
+    progressBar.value = 0;
+    setStatus('Verarbeitung läuft — bitte warten, das dauert etwa so lange wie das Video.', 'busy');
+
+    const stream = stage.captureStream(30);
+    try{
+      const vStream = video.captureStream ? video.captureStream() : null;
+      if(vStream){
+        vStream.getAudioTracks().forEach(t => stream.addTrack(t));
+      }
+    }catch(err){ /* Audiospur optional, ignorieren falls nicht verfügbar */ }
+
+    let mimeType = 'video/webm;codecs=vp9';
+    if(!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/webm;codecs=vp8';
+    if(!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/webm';
+
+    const recorder = new MediaRecorder(stream, { mimeType });
+    const chunks = [];
+    recorder.ondataavailable = e=>{ if(e.data.size) chunks.push(e.data); };
+
+    const duration = video.duration;
+    video.currentTime = 0;
+
+    recorder.onstop = ()=>{
+      const blob = new Blob(chunks, { type: 'video/webm' });
+      const url = URL.createObjectURL(blob);
+      downloadLink.href = url;
+      downloadLink.style.display = 'inline-flex';
+      progressBar.value = 100;
+      setStatus('Fertig — dein Video ist bereit zum Download.', 'done');
+      exportBtn.disabled = false;
+    };
+
+    function renderLoop(){
+      ctx.drawImage(video, 0, 0, stage.width, stage.height);
+      compositeMaskPreview();
+      progressBar.value = Math.min(100, Math.round((video.currentTime / duration) * 100));
+      if(!video.paused && !video.ended){
+        rafId = requestAnimationFrame(renderLoop);
+      }
+    }
+
+    video.onended = ()=>{
+      cancelAnimationFrame(rafId);
+      recorder.stop();
+    };
+
+    try{
+      recorder.start();
+      await video.play();
+      renderLoop();
+    }catch(err){
+      setStatus('Export fehlgeschlagen: ' + err.message, '');
+      exportBtn.disabled = false;
+    }
+  });
+
+  function maskHasContent(){
+    const data = maskCtx.getImageData(0,0,maskCanvas.width, maskCanvas.height).data;
+    for(let i=3; i<data.length; i+=4*97){ if(data[i] > 0) return true; }
+    return false;
+  }
+
+  // ---------- Video Playback Controls ----------
+  const playBtn = document.getElementById('playBtn');
+  const timeline = document.getElementById('timeline');
+  const timeDisplay = document.getElementById('timeDisplay');
+  let isPlaying = false;
+  let playRafId = null;
+
+  function formatTime(seconds){
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
+  function updateTimeline(){
+    if(hasVideoLoaded){
+      timeline.max = video.duration || 100;
+      timeline.value = video.currentTime || 0;
+      timeDisplay.textContent = formatTime(video.currentTime) + ' / ' + formatTime(video.duration);
+    }
+  }
+
+  function playLoop(){
+    if(isPlaying && hasVideoLoaded && video.currentTime < video.duration){
+      ctx.drawImage(video, 0, 0, stage.width, stage.height);
+      compositeMaskPreview();
+      updateTimeline();
+      playRafId = requestAnimationFrame(playLoop);
+    }else if(isPlaying && hasVideoLoaded && video.currentTime >= video.duration){
+      isPlaying = false;
+      playBtn.textContent = '▶ Play';
+    }
+  }
+
+  playBtn.addEventListener('click', async ()=>{
+    if(!hasVideoLoaded) return;
+    if(!isPlaying){
+      isPlaying = true;
+      playBtn.textContent = '⏸ Pause';
+      try{
+        await video.play();
+        playLoop();
+      }catch(err){
+        isPlaying = false;
+        playBtn.textContent = '▶ Play';
+      }
+    }else{
+      isPlaying = false;
+      video.pause();
+      playBtn.textContent = '▶ Play';
+      cancelAnimationFrame(playRafId);
+    }
+  });
+
+  timeline.addEventListener('input', ()=>{
+    if(!hasVideoLoaded) return;
+    video.currentTime = parseFloat(timeline.value);
+    updateTimeline();
+    if(!isPlaying){
+      ctx.drawImage(video, 0, 0, stage.width, stage.height);
+      compositeMaskPreview();
+    }
+  });
+
+  video.addEventListener('play', ()=>{ isPlaying = true; });
+  video.addEventListener('pause', ()=>{ isPlaying = false; });
+})();
+</script>
+</body>
+</html>
